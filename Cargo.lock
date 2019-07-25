@@ -809,6 +809,7 @@ dependencies = [
 name = "lyon_tessellation"
 version = "0.13.3"
 dependencies = [
+ "arrayvec 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "lyon_extra 0.13.0",
  "lyon_path 0.13.2",
  "serde 1.0.82 (registry+https://github.com/rust-lang/crates.io-index)",
