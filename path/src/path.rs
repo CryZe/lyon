@@ -6,9 +6,10 @@ use crate::VertexId;
 use crate::math::*;
 use crate::geom::{LineSegment, QuadraticBezierSegment, CubicBezierSegment, Arc};
 
-use std::iter::IntoIterator;
-use std::ops;
-use std::mem;
+use core::iter::IntoIterator;
+use core::ops;
+use core::mem;
+use alloc::{boxed::Box, vec::Vec};
 
 /// Enumeration corresponding to the [PathEvent](https://docs.rs/lyon_core/*/lyon_core/events/enum.PathEvent.html) enum
 /// without the parameters.
@@ -579,8 +580,8 @@ impl PathBuilder for Builder {
 /// An iterator for `Path` and `PathSlice`.
 #[derive(Clone, Debug)]
 pub struct Iter<'l> {
-    points: ::std::slice::Iter<'l, Point>,
-    verbs: ::std::slice::Iter<'l, Verb>,
+    points: core::slice::Iter<'l, Point>,
+    verbs: core::slice::Iter<'l, Verb>,
     current: Point,
     first: Point,
 }

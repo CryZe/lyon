@@ -227,10 +227,10 @@
 
 pub use crate::path::{VertexId, Index};
 
-use std::marker::PhantomData;
-use std::ops::Add;
-use std::convert::From;
-use std;
+use core::marker::PhantomData;
+use core::ops::Add;
+use core::convert::From;
+use alloc::vec::Vec;
 
 /// An error that can happen while generating geometry.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -501,7 +501,7 @@ impl<T> GeometryBuilder<T> for NoOutput
     }
 
     fn add_vertex(&mut self, _: T) -> Result<VertexId, GeometryBuilderError> {
-        if self.count.vertices >= std::u32::MAX {
+        if self.count.vertices >= core::u32::MAX {
             return Err(GeometryBuilderError::TooManyVertices);
         }
         self.count.vertices += 1;
@@ -532,17 +532,17 @@ pub trait MaxIndex {
     fn max_index() -> usize;
 }
 
-impl MaxIndex for u8 { fn max_index() -> usize { std::u8::MAX as usize } }
-impl MaxIndex for i8 { fn max_index() -> usize { std::i8::MAX as usize } }
-impl MaxIndex for u16 { fn max_index() -> usize { std::u16::MAX as usize } }
-impl MaxIndex for i16 { fn max_index() -> usize { std::i16::MAX as usize } }
-impl MaxIndex for u32 { fn max_index() -> usize { std::u32::MAX as usize } }
-impl MaxIndex for i32 { fn max_index() -> usize { std::i32::MAX as usize } }
+impl MaxIndex for u8 { fn max_index() -> usize { core::u8::MAX as usize } }
+impl MaxIndex for i8 { fn max_index() -> usize { core::i8::MAX as usize } }
+impl MaxIndex for u16 { fn max_index() -> usize { core::u16::MAX as usize } }
+impl MaxIndex for i16 { fn max_index() -> usize { core::i16::MAX as usize } }
+impl MaxIndex for u32 { fn max_index() -> usize { core::u32::MAX as usize } }
+impl MaxIndex for i32 { fn max_index() -> usize { core::i32::MAX as usize } }
 // The tessellators internally use u32 indices so we can't have more than u32::MAX
-impl MaxIndex for u64 { fn max_index() -> usize { std::u32::MAX as usize } }
-impl MaxIndex for i64 { fn max_index() -> usize { std::u32::MAX as usize } }
-impl MaxIndex for usize { fn max_index() -> usize { std::u32::MAX as usize } }
-impl MaxIndex for isize { fn max_index() -> usize { std::u32::MAX as usize } }
+impl MaxIndex for u64 { fn max_index() -> usize { core::u32::MAX as usize } }
+impl MaxIndex for i64 { fn max_index() -> usize { core::u32::MAX as usize } }
+impl MaxIndex for usize { fn max_index() -> usize { core::u32::MAX as usize } }
+impl MaxIndex for isize { fn max_index() -> usize { core::u32::MAX as usize } }
 
 #[test]
 fn test_simple_quad() {

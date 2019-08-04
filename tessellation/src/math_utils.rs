@@ -1,10 +1,12 @@
 //! Various math tools that are mostly usefull for the tessellators.
 
 use crate::fixed;
+use crate::geom::euclid;
 use crate::geom::math::*;
 use crate::path_fill::Edge;
-use crate::geom::euclid;
-use std::f64;
+use core::f64;
+#[cfg(not(feature = "std"))]
+use libm::{F32Ext, F64Ext};
 
 pub type FixedPoint32 = fixed::Fp32<fixed::_16>;
 pub type FixedPoint64 = fixed::Fp64<fixed::_16>;
@@ -12,7 +14,9 @@ pub type TessVector = euclid::default::Vector2D<FixedPoint32>;
 pub type TessPoint = euclid::default::Point2D<FixedPoint32>;
 pub type TessPoint64 = euclid::default::Point2D<FixedPoint64>;
 #[inline]
-pub fn fixed(val: f32) -> FixedPoint32 { FixedPoint32::from_f32(val) }
+pub fn fixed(val: f32) -> FixedPoint32 {
+    FixedPoint32::from_f32(val)
+}
 
 #[inline]
 fn x_aabb_test(a1: FixedPoint32, b1: FixedPoint32, a2: FixedPoint32, b2: FixedPoint32) -> bool {
@@ -26,13 +30,13 @@ pub(crate) fn segment_intersection(
     e1: &Edge, // The new edge.
     e2: &Edge, // An already inserted edge.
 ) -> Option<TessPoint> {
-
     // This early-out test gives a noticeable performance improvement.
     if !x_aabb_test(e1.upper.x, e1.lower.x, e2.upper.x, e2.lower.x) {
         return None;
     }
 
-    if e1.upper == e2.lower || e1.upper == e2.upper || e1.lower == e2.upper || e1.lower == e2.lower {
+    if e1.upper == e2.lower || e1.upper == e2.upper || e1.lower == e2.upper || e1.lower == e2.lower
+    {
         return None;
     }
 
@@ -57,7 +61,7 @@ pub(crate) fn segment_intersection(
         return None;
     }
 
-    let sign_v1_cross_v2 = v1_cross_v2.signum();
+    let sign_v1_cross_v2 = num_traits::sign::Signed::signum(&v1_cross_v2);
     let abs_v1_cross_v2 = f64::abs(v1_cross_v2);
 
     // t and u should be divided by v1_cross_v2, but we postpone that to not lose precision.
@@ -66,7 +70,6 @@ pub(crate) fn segment_intersection(
     let t = (a2 - a1).cross(v2) * sign_v1_cross_v2;
     let u = a2_a1_cross_v1 * sign_v1_cross_v2;
     if t >= 0.0 && t <= abs_v1_cross_v2 && u > 0.0 && u <= abs_v1_cross_v2 {
-
         // Snap intersections to the edge if it is very close.
         // This helps with preventing small floating points errors from
         // accumulating when many edges intersect at the same position.
@@ -84,8 +87,7 @@ pub(crate) fn segment_intersection(
         // It would be great if the assertion below held, but it happens
         // to fail due to precision issues.
         // debug_assert!(res.y <= e1.lower.y && res.y <= e2.lower.y);
-        if res != e1.upper && res != e2.upper
-            && res.y <= e1.lower.y && res.y <= e2.lower.y {
+        if res != e1.upper && res != e2.upper && res.y <= e1.lower.y && res.y <= e2.lower.y {
             return Some(res);
         }
     }
@@ -135,6 +137,12 @@ fn test_compute_normal() {
         }
     }
 
-    assert_almost_eq(compute_normal(vector(1.0, 0.0), vector(0.0, 1.0)), vector(-1.0, 1.0));
-    assert_almost_eq(compute_normal(vector(1.0, 0.0), vector(1.0, 0.0)), vector(0.0, 1.0));
+    assert_almost_eq(
+        compute_normal(vector(1.0, 0.0), vector(0.0, 1.0)),
+        vector(-1.0, 1.0),
+    );
+    assert_almost_eq(
+        compute_normal(vector(1.0, 0.0), vector(1.0, 0.0)),
+        vector(0.0, 1.0),
+    );
 }

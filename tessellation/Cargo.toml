@@ -16,14 +16,18 @@ name = "lyon_tessellation"
 path = "src/lib.rs"
 
 [features]
+default = ["std"]
+std = ["lyon_path/std", "num-traits/std"]
 serialization = ["serde", "lyon_path/serialization"]
 debugger = []
 
 [dependencies]
 
-lyon_path = { version = "0.14.0", path = "../path" }
-sid = "0.5"
+lyon_path = { version = "0.14.0", path = "../path", default-features = false }
+sid = { git = "https://github.com/CryZe/sid", branch = "no-std", default-features = false }
 serde = { version = "1.0", optional = true, features = ["serde_derive"] }
+libm = "0.1.4"
+num-traits = { git = "https://github.com/yoanlcq/num-traits", branch = "libm_no_std", default-features = false, features = ["libm"] }
 
 [dev-dependencies]
-lyon_extra = { version = "0.14.0", path = "../extra" }
+# lyon_extra = { version = "0.14.0", path = "../extra" }

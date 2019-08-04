@@ -1,10 +1,10 @@
-use std::marker::PhantomData;
-use std::cmp;
-use std::ops;
-use std::fmt;
-use std::hash;
-use std::convert;
-use std::i32;
+use core::marker::PhantomData;
+use core::cmp;
+use core::ops;
+use core::fmt;
+use core::hash;
+use core::convert;
+use core::i32;
 
 pub struct _1;
 pub struct _2;

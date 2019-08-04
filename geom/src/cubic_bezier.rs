@@ -10,8 +10,8 @@ use crate::utils::{min_max, cubic_polynomial_roots};
 use crate::segment::{Segment, FlattenedForEach, approximate_length_from_flattening, BoundingRect};
 use arrayvec::ArrayVec;
 
-use std::ops::Range;
-use std::cmp::Ordering::{Less, Equal, Greater};
+use core::ops::Range;
+use core::cmp::Ordering::{Less, Equal, Greater};
 
 /// A 2d curve segment defined by four points: the beginning of the segment, two control
 /// points and the end of the segment.

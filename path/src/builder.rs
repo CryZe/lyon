@@ -78,7 +78,7 @@ use crate::math::*;
 use crate::events::{PathEvent, FlattenedEvent, SvgEvent};
 use crate::geom::{CubicBezierSegment, QuadraticBezierSegment, SvgArc, Arc, ArcFlags};
 use crate::path_state::PathState;
-use std::marker::Sized;
+use core::marker::Sized;
 
 pub trait Build {
     /// The type of object that is created by this builder.

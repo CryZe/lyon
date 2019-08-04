@@ -1,4 +1,5 @@
 use crate::geom::math::Point;
+use alloc::{vec::Vec, string::String};
 
 use std::sync::mpsc::{channel, Sender, Receiver};
 

@@ -2,10 +2,11 @@ use crate::segment::{Segment, BoundingRect};
 use crate::scalar::{Scalar, NumCast};
 use crate::generic_math::{Point, Vector, Rect};
 use crate::{QuadraticBezierSegment, CubicBezierSegment};
-use std::ops::Range;
+use core::ops::Range;
 use arrayvec::ArrayVec;
 
-use std::f64;
+#[cfg(not(feature = "std"))]
+use libm::F64Ext;
 
 pub(crate) trait MonotonicSegment {
     type Scalar: Scalar;
@@ -114,7 +115,7 @@ impl<S: Scalar> Monotonic<QuadraticBezierSegment<S>> {
         let b = -2.0 * from + 2.0 * ctrl;
         let c = from - x;
 
-        let t = 2.0 * c / (-b - f64::sqrt(b * b - 4.0 * a * c));
+        let t = 2.0 * c / (-b - (b * b - 4.0 * a * c).sqrt());
 
         NumCast::from(t.max(0.0).min(1.0)).unwrap()
     }

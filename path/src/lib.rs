@@ -1,5 +1,6 @@
 #![doc(html_logo_url = "https://nical.github.io/lyon-doc/lyon-logo.svg")]
 #![deny(bare_trait_objects)]
+#![no_std]
 
 //! Data structures and traits to work with paths (vector graphics).
 //!
@@ -40,24 +41,26 @@
 
 pub use lyon_geom as geom;
 
+extern crate alloc;
+
 #[cfg(feature = "serialization")]
 #[macro_use]
 pub extern crate serde;
 
-mod events;
-mod path_state;
-mod path;
-pub mod iterator;
 pub mod builder;
+mod events;
+pub mod iterator;
+mod path;
+mod path_state;
 
-pub use crate::path::*;
 pub use crate::events::*;
-pub use crate::path_state::*;
+pub use crate::geom::math;
 pub use crate::geom::ArcFlags;
-pub use crate::geom::math as math;
+pub use crate::path::*;
+pub use crate::path_state::*;
 
-use std::ops::{Add, Sub};
-use std::u32;
+use core::ops::{Add, Sub};
+use core::u32;
 
 pub type Index = u32;
 
@@ -83,11 +86,17 @@ pub struct VertexId(pub Index);
 impl VertexId {
     pub const INVALID: VertexId = VertexId(u32::MAX);
 
-    pub fn offset(&self) -> Index { self.0 }
+    pub fn offset(&self) -> Index {
+        self.0
+    }
 
-    pub fn to_usize(&self) -> usize { self.0 as usize }
+    pub fn to_usize(&self) -> usize {
+        self.0 as usize
+    }
 
-    pub fn from_usize(v: usize) -> Self { VertexId(v as Index) }
+    pub fn from_usize(v: usize) -> Self {
+        VertexId(v as Index)
+    }
 }
 
 impl Add<u32> for VertexId {
@@ -105,24 +114,38 @@ impl Sub<u32> for VertexId {
 }
 
 impl From<u16> for VertexId {
-    fn from(v: u16) -> Self { VertexId(v as Index) }
+    fn from(v: u16) -> Self {
+        VertexId(v as Index)
+    }
 }
 impl From<u32> for VertexId {
-    fn from(v: u32) -> Self { VertexId(v) }
+    fn from(v: u32) -> Self {
+        VertexId(v)
+    }
 }
 impl From<i32> for VertexId {
-    fn from(v: i32) -> Self { VertexId(v as Index) }
+    fn from(v: i32) -> Self {
+        VertexId(v as Index)
+    }
 }
 
 impl From<VertexId> for u16 {
-    fn from(v: VertexId) -> Self { v.0 as u16 }
+    fn from(v: VertexId) -> Self {
+        v.0 as u16
+    }
 }
 impl From<VertexId> for u32 {
-    fn from(v: VertexId) -> Self { v.0 }
+    fn from(v: VertexId) -> Self {
+        v.0
+    }
 }
 impl From<VertexId> for i32 {
-    fn from(v: VertexId) -> Self { v.0 as i32 }
+    fn from(v: VertexId) -> Self {
+        v.0 as i32
+    }
 }
 impl From<VertexId> for usize {
-    fn from(v: VertexId) -> Self { v.0 as usize }
+    fn from(v: VertexId) -> Self {
+        v.0 as usize
+    }
 }

@@ -1,16 +1,18 @@
-use crate::math_utils::compute_normal;
-use crate::geom::math::*;
-use crate::geom::{QuadraticBezierSegment, CubicBezierSegment, LineSegment, Arc};
-use crate::geom::utils::{normalized_tangent, directed_angle};
-use crate::geom::euclid::Trig;
-use crate::geometry_builder::{VertexId, GeometryBuilder, GeometryBuilderError};
 use crate::basic_shapes::circle_flattening_step;
+// use crate::geom::euclid::Trig;
+use crate::geom::math::*;
+use crate::geom::utils::{directed_angle, normalized_tangent};
+use crate::geom::{Arc, CubicBezierSegment, LineSegment, QuadraticBezierSegment};
+use crate::geometry_builder::{GeometryBuilder, GeometryBuilderError, VertexId};
+use crate::math_utils::compute_normal;
 use crate::path::builder::{Build, FlatPathBuilder, PathBuilder};
 use crate::path::PathEvent;
 use crate::StrokeVertex as Vertex;
-use crate::{Side, Order, LineCap, LineJoin, StrokeOptions, TessellationError, TessellationResult};
+use crate::{LineCap, LineJoin, Order, Side, StrokeOptions, TessellationError, TessellationResult};
 
-use std::f32::consts::PI;
+use core::f32::consts::PI;
+#[cfg(not(feature = "std"))]
+use libm::F32Ext;
 const EPSILON: f32 = 1e-4;
 
 /// A Context object that can tessellate stroke operations for complex paths.
@@ -87,7 +89,9 @@ const EPSILON: f32 = 1e-4;
 pub struct StrokeTessellator {}
 
 impl StrokeTessellator {
-    pub fn new() -> Self { StrokeTessellator {} }
+    pub fn new() -> Self {
+        StrokeTessellator {}
+    }
 
     /// Compute the tessellation from a path iterator.
     pub fn tessellate_path<Input>(
@@ -107,7 +111,7 @@ impl StrokeTessellator {
                 stroker.path_event(evt);
                 if let Some(error) = stroker.error {
                     stroker.output.abort_geometry();
-                    return Err(error)
+                    return Err(error);
                 }
             }
 
@@ -132,7 +136,7 @@ macro_rules! add_vertex {
                 VertexId(0)
             }
         }
-    }}
+    }};
 }
 
 /// A builder that tessellates a stroke directly without allocating any intermediate data structure.
@@ -228,8 +232,10 @@ impl<'l> FlatPathBuilder for StrokeBuilder<'l> {
                 }
             );
 
-            self.output.add_triangle(first_right_id, first_left_id, self.second_right_id);
-            self.output.add_triangle(first_left_id, self.second_left_id, self.second_right_id);
+            self.output
+                .add_triangle(first_right_id, first_left_id, self.second_right_id);
+            self.output
+                .add_triangle(first_left_id, self.second_left_id, self.second_right_id);
         }
         self.nth = 0;
         self.current = self.first;
@@ -237,7 +243,9 @@ impl<'l> FlatPathBuilder for StrokeBuilder<'l> {
         self.previous_command_was_move = false;
     }
 
-    fn current_position(&self) -> Point { self.current }
+    fn current_position(&self) -> Point {
+        self.current
+    }
 }
 
 impl<'l> PathBuilder for StrokeBuilder<'l> {
@@ -248,13 +256,11 @@ impl<'l> PathBuilder for StrokeBuilder<'l> {
             from: self.current,
             ctrl,
             to,
-        }.for_each_flattened(
-            self.options.tolerance,
-            &mut |point| {
-                self.edge_to(point, first);
-                first = false;
-            }
-        );
+        }
+        .for_each_flattened(self.options.tolerance, &mut |point| {
+            self.edge_to(point, first);
+            first = false;
+        });
     }
 
     fn cubic_bezier_to(&mut self, ctrl1: Point, ctrl2: Point, to: Point) {
@@ -265,22 +271,14 @@ impl<'l> PathBuilder for StrokeBuilder<'l> {
             ctrl1,
             ctrl2,
             to,
-        }.for_each_flattened(
-            self.options.tolerance,
-            &mut |point| {
-                self.edge_to(point, first);
-                first = false;
-            }
-        );
+        }
+        .for_each_flattened(self.options.tolerance, &mut |point| {
+            self.edge_to(point, first);
+            first = false;
+        });
     }
 
-    fn arc(
-        &mut self,
-        center: Point,
-        radii: Vector,
-        sweep_angle: Angle,
-        x_rotation: Angle
-    ) {
+    fn arc(&mut self, center: Point, radii: Vector, sweep_angle: Angle, x_rotation: Angle) {
         let start_angle = (self.current - center).angle_from_x_axis() - x_rotation;
         let mut first = true;
         Arc {
@@ -289,21 +287,16 @@ impl<'l> PathBuilder for StrokeBuilder<'l> {
             start_angle,
             sweep_angle,
             x_rotation,
-        }.for_each_flattened(
-            self.options.tolerance,
-            &mut |point| {
-                self.edge_to(point, first);
-                first = false;
-            }
-        );
+        }
+        .for_each_flattened(self.options.tolerance, &mut |point| {
+            self.edge_to(point, first);
+            first = false;
+        });
     }
 }
 
 impl<'l> StrokeBuilder<'l> {
-    pub fn new(
-        options: &StrokeOptions,
-        builder: &'l mut dyn GeometryBuilder<Vertex>,
-    ) -> Self {
+    pub fn new(options: &StrokeOptions, builder: &'l mut dyn GeometryBuilder<Vertex>) -> Self {
         let zero = Point::new(0.0, 0.0);
         StrokeBuilder {
             first: zero,
@@ -315,7 +308,7 @@ impl<'l> StrokeBuilder<'l> {
             previous_right_id: VertexId(0),
             second_left_id: VertexId(0),
             second_right_id: VertexId(0),
-            previous_front_side: Side::Left,  // per convention
+            previous_front_side: Side::Left, // per convention
             nth: 0,
             length: 0.0,
             sub_path_start_length: 0.0,
@@ -326,7 +319,9 @@ impl<'l> StrokeBuilder<'l> {
         }
     }
 
-    pub fn set_options(&mut self, options: &StrokeOptions) { self.options = *options; }
+    pub fn set_options(&mut self, options: &StrokeOptions) {
+        self.options = *options;
+    }
 
     #[cold]
     fn builder_error(&mut self, e: GeometryBuilderError) {
@@ -471,8 +466,10 @@ impl<'l> StrokeBuilder<'l> {
                 self.tessellate_round_cap(first, d, first_left_id, first_right_id, true);
             }
 
-            self.output.add_triangle(first_right_id, first_left_id, self.second_right_id);
-            self.output.add_triangle(first_left_id, self.second_left_id, self.second_right_id);
+            self.output
+                .add_triangle(first_right_id, first_left_id, self.second_right_id);
+            self.output
+                .add_triangle(first_left_id, self.second_left_id, self.second_right_id);
         }
     }
 
@@ -492,30 +489,35 @@ impl<'l> StrokeBuilder<'l> {
 
         let previous_edge = self.current - self.previous;
         let next_edge = to - self.current;
-        let join_type = if with_join { self.options.line_join } else { LineJoin::Miter };
+        let join_type = if with_join {
+            self.options.line_join
+        } else {
+            LineJoin::Miter
+        };
 
-        let (
-            start_left_id,
-            start_right_id,
-            end_left_id,
-            end_right_id,
-            front_side,
-        ) = self.tessellate_join(
-            previous_edge,
-            next_edge,
-            join_type,
-        );
+        let (start_left_id, start_right_id, end_left_id, end_right_id, front_side) =
+            self.tessellate_join(previous_edge, next_edge, join_type);
 
         // Tessellate the edge
         if self.nth > 1 {
             match self.previous_front_side {
                 Side::Left => {
-                    self.output.add_triangle(self.previous_right_id, self.previous_left_id, start_right_id);
-                    self.output.add_triangle(self.previous_left_id, start_left_id, start_right_id);
-                },
+                    self.output.add_triangle(
+                        self.previous_right_id,
+                        self.previous_left_id,
+                        start_right_id,
+                    );
+                    self.output
+                        .add_triangle(self.previous_left_id, start_left_id, start_right_id);
+                }
                 Side::Right => {
-                    self.output.add_triangle(self.previous_right_id, self.previous_left_id, start_left_id);
-                    self.output.add_triangle(self.previous_right_id, start_left_id, start_right_id);
+                    self.output.add_triangle(
+                        self.previous_right_id,
+                        self.previous_left_id,
+                        start_left_id,
+                    );
+                    self.output
+                        .add_triangle(self.previous_right_id, start_left_id, start_right_id);
                 }
             }
         }
@@ -572,9 +574,9 @@ impl<'l> StrokeBuilder<'l> {
         );
 
         let (v1, v2, v3) = if is_start {
-           (left, right, mid_vertex)
+            (left, right, mid_vertex)
         } else {
-           (left, mid_vertex, right)
+            (left, mid_vertex, right)
         };
         self.output.add_triangle(v1, v2, v3);
 
@@ -588,13 +590,14 @@ impl<'l> StrokeBuilder<'l> {
             center,
             (left_angle, mid_angle),
             radius,
-            left, mid_vertex,
+            left,
+            mid_vertex,
             num_recursions,
             advancement,
             Side::Left,
             apply_width,
             !is_start,
-            self.output
+            self.output,
         ) {
             self.builder_error(e);
         }
@@ -602,35 +605,39 @@ impl<'l> StrokeBuilder<'l> {
             center,
             (mid_angle, right_angle),
             radius,
-            mid_vertex, right,
+            mid_vertex,
+            right,
             num_recursions,
             advancement,
             Side::Right,
             apply_width,
             !is_start,
-            self.output
+            self.output,
         ) {
             self.builder_error(e);
         }
     }
 
     fn tessellate_back_join(
-        &mut self, prev_tangent: Vector,
+        &mut self,
+        prev_tangent: Vector,
         next_tangent: Vector,
         prev_length: f32,
         next_length: f32,
         front_side: Side,
-        front_normal: Vector)
-    -> (VertexId, VertexId, Option<Order>) {
+        front_normal: Vector,
+    ) -> (VertexId, VertexId, Option<Order>) {
         // We must watch out for special cases where the previous or next edge is small relative
         // to the line width inducing an overlap of the stroke of both edges.
 
         let d_next = -self.options.line_width / 2.0 * front_normal.dot(next_tangent) - next_length;
         let d_prev = -self.options.line_width / 2.0 * front_normal.dot(-prev_tangent) - prev_length;
 
-        let (d, t2, order) =
-            if d_prev > d_next { (d_prev, next_tangent, Order::Before) }
-            else { (d_next, -prev_tangent, Order::After) };
+        let (d, t2, order) = if d_prev > d_next {
+            (d_prev, next_tangent, Order::Before)
+        } else {
+            (d_next, -prev_tangent, Order::After)
+        };
 
         // Case of an overlapping stroke
         // We must build the back join with two vertices in order to respect the correct shape
@@ -638,7 +645,7 @@ impl<'l> StrokeBuilder<'l> {
         if d > 0.0 {
             let n2: Vector = match front_side {
                 Side::Right => vector(t2.y, -t2.x),
-                Side::Left => vector(-t2.y, t2.x)
+                Side::Left => vector(-t2.y, t2.x),
             } * if order.is_after() { -1.0 } else { 1.0 };
             let back_end_vertex_normal = -n2;
             let back_start_vertex_normal = vector(0.0, 0.0);
@@ -663,8 +670,8 @@ impl<'l> StrokeBuilder<'l> {
             // return
             return match order {
                 Order::Before => (back_start_vertex, back_end_vertex, Some(order)),
-                Order::After => (back_end_vertex, back_start_vertex, Some(order))
-            }
+                Order::After => (back_end_vertex, back_start_vertex, Some(order)),
+            };
         }
 
         // Standard Case
@@ -681,7 +688,8 @@ impl<'l> StrokeBuilder<'l> {
         (back_start_vertex, back_end_vertex, None)
     }
 
-    fn tessellate_join(&mut self,
+    fn tessellate_join(
+        &mut self,
         previous_edge: Vector,
         next_edge: Vector,
         mut join_type: LineJoin,
@@ -708,7 +716,8 @@ impl<'l> StrokeBuilder<'l> {
             previous_edge_length,
             next_edge_length,
             front_side,
-            front_normal);
+            front_normal,
+        );
 
         let threshold = 0.95;
         if prev_tangent.dot(next_tangent) >= threshold {
@@ -727,7 +736,7 @@ impl<'l> StrokeBuilder<'l> {
         let back_join_vertex = if let Some(_order) = order {
             match _order {
                 Order::Before => back_start_vertex,
-                Order::After => back_end_vertex
+                Order::After => back_end_vertex,
             }
         } else {
             back_start_vertex
@@ -735,30 +744,18 @@ impl<'l> StrokeBuilder<'l> {
 
         let (start_vertex, end_vertex) = match join_type {
             LineJoin::Round => {
-                self.tessellate_round_join(
-                    prev_tangent,
-                    next_tangent,
-                    front_side,
-                    back_join_vertex
-                )
+                self.tessellate_round_join(prev_tangent, next_tangent, front_side, back_join_vertex)
             }
             LineJoin::Bevel => {
-                self.tessellate_bevel_join(
-                    prev_tangent,
-                    next_tangent,
-                    front_side,
-                    back_join_vertex
-                )
+                self.tessellate_bevel_join(prev_tangent, next_tangent, front_side, back_join_vertex)
             }
-            LineJoin::MiterClip => {
-                self.tessellate_miter_clip_join(
-                    prev_tangent,
-                    next_tangent,
-                    front_side,
-                    back_join_vertex,
-                    normal
-                )
-            }
+            LineJoin::MiterClip => self.tessellate_miter_clip_join(
+                prev_tangent,
+                next_tangent,
+                front_side,
+                back_join_vertex,
+                normal,
+            ),
             // Fallback to Miter for unimplemented line joins
             _ => {
                 let end_vertex = add_vertex!(
@@ -779,7 +776,7 @@ impl<'l> StrokeBuilder<'l> {
                     };
                     let n1: Vector = match front_side {
                         Side::Right => vector(t2.y, -t2.x),
-                        Side::Left => vector(-t2.y, t2.x)
+                        Side::Left => vector(-t2.y, t2.x),
                     };
 
                     let start_vertex = add_vertex!(
@@ -791,10 +788,11 @@ impl<'l> StrokeBuilder<'l> {
                             side: front_side,
                         }
                     );
-                     self.output.add_triangle(start_vertex, end_vertex, back_join_vertex);
-                     match _order {
+                    self.output
+                        .add_triangle(start_vertex, end_vertex, back_join_vertex);
+                    match _order {
                         Order::Before => (end_vertex, start_vertex),
-                        Order::After => (start_vertex, end_vertex)
+                        Order::After => (start_vertex, end_vertex),
                     }
                 } else {
                     (end_vertex, end_vertex)
@@ -819,8 +817,20 @@ impl<'l> StrokeBuilder<'l> {
         }
 
         match front_side {
-            Side::Left => (start_vertex, back_start_vertex, end_vertex, back_end_vertex, front_side),
-            Side::Right => (back_start_vertex, start_vertex, back_end_vertex, end_vertex, front_side),
+            Side::Left => (
+                start_vertex,
+                back_start_vertex,
+                end_vertex,
+                back_end_vertex,
+                front_side,
+            ),
+            Side::Right => (
+                back_start_vertex,
+                start_vertex,
+                back_end_vertex,
+                end_vertex,
+                front_side,
+            ),
         }
     }
 
@@ -874,7 +884,8 @@ impl<'l> StrokeBuilder<'l> {
     ) -> (VertexId, VertexId) {
         let join_angle = get_join_angle(prev_tangent, next_tangent);
 
-        let max_radius_segment_angle = compute_max_radius_segment_angle(self.options.line_width / 2.0, self.options.tolerance);
+        let max_radius_segment_angle =
+            compute_max_radius_segment_angle(self.options.line_width / 2.0, self.options.tolerance);
         let num_segments = (join_angle.abs() as f32 / max_radius_segment_angle).ceil() as u32;
         debug_assert!(num_segments > 0);
         // Calculate angle of each step
@@ -899,17 +910,14 @@ impl<'l> StrokeBuilder<'l> {
         // Plot each point along the radius by using a matrix to
         // rotate the normal at each step
         let (sin, cos) = segment_angle.sin_cos();
-        let rotation_matrix = [
-            [cos, sin],
-            [-sin, cos],
-        ];
+        let rotation_matrix = [[cos, sin], [-sin, cos]];
 
         let mut n = initial_normal;
         for _ in 0..num_segments {
             // incrementally rotate the normal
             n = vector(
                 n.x * rotation_matrix[0][0] + n.y * rotation_matrix[0][1],
-                n.x * rotation_matrix[1][0] + n.y * rotation_matrix[1][1]
+                n.x * rotation_matrix[1][0] + n.y * rotation_matrix[1][1],
             );
 
             let current_vertex = add_vertex!(
@@ -983,28 +991,51 @@ impl<'l> StrokeBuilder<'l> {
         (start_vertex, last_vertex)
     }
 
-    fn miter_limit_is_exceeded(&self, normal: Vector ) -> bool {
+    fn miter_limit_is_exceeded(&self, normal: Vector) -> bool {
         normal.square_length() > self.options.miter_limit * self.options.miter_limit
     }
 
-    fn get_clip_intersections(&self, prev_normal: Vector, next_normal: Vector, normal: Vector) -> (Vector, Vector) {
+    fn get_clip_intersections(
+        &self,
+        prev_normal: Vector,
+        next_normal: Vector,
+        normal: Vector,
+    ) -> (Vector, Vector) {
         let miter_length = self.options.miter_limit * self.options.line_width;
         let normal_limit = normal.normalize() * miter_length;
 
-        let normal_limit_perp = LineSegment{
-            from: point(normal_limit.x - normal_limit.y, normal_limit.y + normal_limit.x),
-            to: point(normal_limit.x + normal_limit.y, normal_limit.y - normal_limit.x)
+        let normal_limit_perp = LineSegment {
+            from: point(
+                normal_limit.x - normal_limit.y,
+                normal_limit.y + normal_limit.x,
+            ),
+            to: point(
+                normal_limit.x + normal_limit.y,
+                normal_limit.y - normal_limit.x,
+            ),
         };
 
         let prev_normal = prev_normal.to_point();
         let next_normal = next_normal.to_point();
         let normal = normal.to_point();
 
-        let l1 = LineSegment{ from : prev_normal, to: normal };
-        let l2 = LineSegment{ from: next_normal, to: normal };
+        let l1 = LineSegment {
+            from: prev_normal,
+            to: normal,
+        };
+        let l2 = LineSegment {
+            from: next_normal,
+            to: normal,
+        };
 
-        let i1 = l1.intersection(&normal_limit_perp).unwrap_or(prev_normal).to_vector();
-        let i2 = l2.intersection(&normal_limit_perp).unwrap_or(next_normal).to_vector();
+        let i1 = l1
+            .intersection(&normal_limit_perp)
+            .unwrap_or(prev_normal)
+            .to_vector();
+        let i2 = l2
+            .intersection(&normal_limit_perp)
+            .unwrap_or(next_normal)
+            .to_vector();
 
         (i1, i2)
     }
@@ -1017,7 +1048,8 @@ fn compute_max_radius_segment_angle(radius: f32, tolerance: f32) -> f32 {
 }
 
 fn get_join_angle(prev_tangent: Vector, next_tangent: Vector) -> f32 {
-    let mut join_angle = Trig::fast_atan2(prev_tangent.y, prev_tangent.x) - Trig::fast_atan2(next_tangent.y, next_tangent.x);
+    let mut join_angle = crate::geom::euclid::Trig::fast_atan2(prev_tangent.y, prev_tangent.x)
+        - crate::geom::euclid::Trig::fast_atan2(next_tangent.y, next_tangent.x);
 
     // Make sure to stay within the [-Pi, Pi] range.
     if join_angle > PI {
@@ -1040,7 +1072,7 @@ fn tess_round_cap(
     side: Side,
     line_width: f32,
     invert_winding: bool,
-    output: &mut dyn GeometryBuilder<Vertex>
+    output: &mut dyn GeometryBuilder<Vertex>,
 ) -> Result<(), GeometryBuilderError> {
     if num_recursions == 0 {
         return Ok(());
@@ -1075,7 +1107,7 @@ fn tess_round_cap(
         side,
         line_width,
         invert_winding,
-        output
+        output,
     )?;
     tess_round_cap(
         center,
@@ -1088,22 +1120,17 @@ fn tess_round_cap(
         side,
         line_width,
         invert_winding,
-        output
+        output,
     )
 }
 
 #[cfg(test)]
+use crate::geometry_builder::{simple_builder, Count, SimpleBuffersBuilder, VertexBuffers};
+#[cfg(test)]
 use crate::path::{Path, PathSlice};
-#[cfg(test)]
-use crate::geometry_builder::{SimpleBuffersBuilder, simple_builder, VertexBuffers, Count};
 
 #[cfg(test)]
-fn test_path(
-    path: PathSlice,
-    options: &StrokeOptions,
-    expected_triangle_count: Option<u32>
-) {
-
+fn test_path(path: PathSlice, options: &StrokeOptions, expected_triangle_count: Option<u32>) {
     struct TestBuilder<'l> {
         builder: SimpleBuffersBuilder<'l, Vertex>,
     }
@@ -1143,16 +1170,22 @@ fn test_path(
     let mut buffers: VertexBuffers<Vertex, u16> = VertexBuffers::new();
 
     let mut tess = StrokeTessellator::new();
-    let count = tess.tessellate_path(
-        path,
-        &options,
-        &mut TestBuilder {
-            builder: simple_builder(&mut buffers)
-        }
-    ).unwrap();
+    let count = tess
+        .tessellate_path(
+            path,
+            &options,
+            &mut TestBuilder {
+                builder: simple_builder(&mut buffers),
+            },
+        )
+        .unwrap();
 
     if let Some(triangles) = expected_triangle_count {
-        assert_eq!(triangles, count.indices / 3, "Unexpected number of triangles");
+        assert_eq!(
+            triangles,
+            count.indices / 3,
+            "Unexpected number of triangles"
+        );
     }
 }
 
@@ -1202,12 +1235,16 @@ fn test_square() {
 
     test_path(
         path1.as_slice(),
-        &StrokeOptions::default().with_line_join(LineJoin::MiterClip).with_miter_limit(1.0),
+        &StrokeOptions::default()
+            .with_line_join(LineJoin::MiterClip)
+            .with_miter_limit(1.0),
         Some(12),
     );
     test_path(
         path2.as_slice(),
-        &StrokeOptions::default().with_line_join(LineJoin::MiterClip).with_miter_limit(1.0),
+        &StrokeOptions::default()
+            .with_line_join(LineJoin::MiterClip)
+            .with_miter_limit(1.0),
         Some(12),
     );
 
@@ -1226,11 +1263,7 @@ fn test_square() {
 #[test]
 fn test_empty_path() {
     let path = Path::builder().build();
-    test_path(
-        path.as_slice(),
-        &StrokeOptions::default(),
-        Some(0),
-    );
+    test_path(path.as_slice(), &StrokeOptions::default(), Some(0));
 }
 
 #[test]
@@ -1264,12 +1297,12 @@ fn test_empty_caps() {
 fn test_too_many_vertices() {
     /// This test checks that the tessellator returns the proper error when
     /// the geometry builder run out of vertex ids.
-
     use crate::extra::rust_logo::build_logo_path;
 
-    struct Builder { max_vertices: u32 }
-    impl<T> GeometryBuilder<T> for Builder
-    {
+    struct Builder {
+        max_vertices: u32,
+    }
+    impl<T> GeometryBuilder<T> for Builder {
         fn add_vertex(&mut self, _: T) -> Result<VertexId, GeometryBuilderError> {
             if self.max_vertices == 0 {
                 return Err(GeometryBuilderError::TooManyVertices);
@@ -1279,7 +1312,12 @@ fn test_too_many_vertices() {
         }
         fn begin_geometry(&mut self) {}
         fn add_triangle(&mut self, _a: VertexId, _b: VertexId, _c: VertexId) {}
-        fn end_geometry(&mut self) -> Count { Count { vertices: 0, indices: 0 } }
+        fn end_geometry(&mut self) -> Count {
+            Count {
+                vertices: 0,
+                indices: 0,
+            }
+        }
         fn abort_geometry(&mut self) {}
     }
 

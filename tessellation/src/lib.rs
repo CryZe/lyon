@@ -1,5 +1,6 @@
 #![doc(html_logo_url = "https://nical.github.io/lyon-doc/lyon-logo.svg")]
 #![deny(bare_trait_objects)]
+#![no_std]
 
 //! Tessellation of 2D fill and stroke operations.
 //!
@@ -183,12 +184,17 @@ pub use lyon_path as path;
 
 #[cfg(test)] use lyon_extra as extra;
 
+#[cfg(feature = "std")]
+extern crate std;
+extern crate alloc;
+
 #[cfg(feature = "serialization")]
 #[macro_use]
 pub extern crate serde;
 
 pub mod basic_shapes;
 pub mod geometry_builder;
+#[cfg(feature = "std")]
 pub mod debugger;
 mod path_fill;
 mod path_stroke;

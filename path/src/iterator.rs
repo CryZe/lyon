@@ -138,7 +138,8 @@
 //!     }
 //! }
 //! ```
-use std::iter;
+use core::iter;
+use alloc::vec::Vec;
 
 use crate::math::*;
 use crate::{PathEvent, SvgEvent, FlattenedEvent, QuadraticEvent, PathState};

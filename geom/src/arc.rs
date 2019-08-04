@@ -1,7 +1,7 @@
 //! Elliptic arc related maths and tools.
 
-use std::ops::Range;
-use std::mem::swap;
+use core::ops::Range;
+use core::mem::swap;
 
 use crate::Line;
 use crate::scalar::{Scalar, Float, cast};

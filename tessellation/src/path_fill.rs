@@ -20,8 +20,11 @@
 // It's super slow right now.
 //
 
-use std::mem::{replace, swap};
-use std::cmp::{PartialOrd, Ordering};
+use core::mem::{replace, swap};
+use core::cmp::{PartialOrd, Ordering};
+use alloc::vec::Vec;
+#[cfg(not(feature = "std"))]
+use libm::F32Ext;
 
 use sid::{Id, IdVec};
 
@@ -342,7 +345,7 @@ impl FillTessellator {
         output: &mut dyn GeometryBuilder<Vertex>,
     ) -> TessellationResult {
         if options.fill_rule != FillRule::EvenOdd {
-            println!("warning: Fill rule {:?} is not supported yet.", options.fill_rule);
+            // println!("warning: Fill rule {:?} is not supported yet.", options.fill_rule);
             match options.on_error {
                 OnError::Stop => { return Err(TessellationError::UnsupportedParamater); }
                 OnError::Panic => { panic!("Unsupported fill rule"); }
@@ -1338,6 +1341,10 @@ impl FillTessellator {
         }
     }
 
+    #[cfg(not(test))]
+    fn log_sl_winding(&self) {}
+
+    #[cfg(test)]
     fn log_sl_winding(&self) {
         if !self.log {
             return;

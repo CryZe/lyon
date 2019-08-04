@@ -11,7 +11,10 @@ use crate::generic_math::{point, Point, Rect};
 use crate::scalar::Scalar;
 use crate::CubicBezierSegment;
 use arrayvec::ArrayVec;
-use std::ops::Range;
+use core::ops::Range;
+
+// TODO: Maybe gate
+use alloc::{vec, vec::Vec};
 
 // Computes the intersections (if any) between two cubic bézier curves in the form of the `t`
 // parameters of each intersection point along the curves.

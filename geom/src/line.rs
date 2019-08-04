@@ -3,9 +3,9 @@ use crate::generic_math::{Point, point, Vector, vector, Rect, Size, Transform2D}
 use crate::segment::{Segment, FlatteningStep, BoundingRect};
 use crate::monotonic::MonotonicSegment;
 use crate::utils::min_max;
-use std::mem::swap;
+use core::mem::swap;
 
-use std::ops::Range;
+use core::ops::Range;
 
 /// A linear segment.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -280,7 +280,7 @@ impl<S: Scalar> LineSegment<S> {
     fn axis_aligned_intersection_1d(mut a: S, mut b: S, v: S) -> Option<S> {
         let swap = a > b;
         if swap {
-            std::mem::swap(&mut a, &mut b);
+            core::mem::swap(&mut a, &mut b);
         }
 
         let d = b - a;

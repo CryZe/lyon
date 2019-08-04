@@ -6,8 +6,8 @@ use crate::segment::{Segment, FlatteningStep, FlattenedForEach, BoundingRect};
 use crate::segment;
 use arrayvec::ArrayVec;
 
-use std::ops::Range;
-use std::mem;
+use core::ops::Range;
+use core::mem;
 
 /// A flattening iterator for quadratic bézier segments.
 pub type Flattened<S> = segment::Flattened<S, QuadraticBezierSegment<S>>;

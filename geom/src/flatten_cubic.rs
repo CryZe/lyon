@@ -277,7 +277,7 @@ where
     let mut second_inflection = c / q;
 
     if first_inflection > second_inflection {
-        std::mem::swap(&mut first_inflection, &mut second_inflection);
+        core::mem::swap(&mut first_inflection, &mut second_inflection);
     }
 
     if in_range(first_inflection) {
